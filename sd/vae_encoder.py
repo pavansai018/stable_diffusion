@@ -46,7 +46,7 @@ class VAE_Encoder(nn.Sequential):
 
             # how pixels are related to each other
             # (batch_size, 512, height/8, width/8) -> (batch_size, 512, height/8, width/8)
-            VAE_AttentionBlock(512),
+            VAE_AttentionBlock(channels=512),
 
             # (batch_size, 512, height/8, width/8) -> (batch_size, 512, height/8, width/8)
             VAE_ResidualBlock(in_channels=512, out_channels=512),
