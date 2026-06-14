@@ -10,15 +10,19 @@ def preload_models_from_standard_weights(ckpt_path: str, device: str):
     device = 'cpu'
     encoder = VAE_Encoder().to(device)
     encoder.load_state_dict(state_dict['encoder'], strict=True)
+    encoder.half()
 
     decoder = VAE_Decoder().to(device)
     decoder.load_state_dict(state_dict['decoder'], strict=True)
+    decoder.half()
 
     diffusion = Diffusion().to(device)
     diffusion.load_state_dict(state_dict['diffusion'], strict=True)
+    diffusion.half()
 
     clip = CLIP().to(device)
     clip.load_state_dict(state_dict['clip'], strict=True)
+    clip.half()
 
     return {
         'clip': clip,
