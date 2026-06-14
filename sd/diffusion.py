@@ -82,7 +82,7 @@ class UNET_AttentionBlock(nn.Module):
         self.layernorm_1 = nn.LayerNorm(normalized_shape=channels)
         self.attention_1 = SelfAttention(n_heads=n_head, d_embed=channels, in_proj_bias=False)
         self.layernorm_2 = nn.LayerNorm(normalized_shape=channels)
-        self.attention_2 = CrossAttention(n_heads=n_head, d_cross=channels, d_embed=d_context, in_proj_bias=False)
+        self.attention_2 = CrossAttention(n_heads=n_head, d_embed=channels, d_cross=d_context, in_proj_bias=False)
         self.layernorm_3 = nn.LayerNorm(normalized_shape=channels)
         self.linear_geglu_1  = nn.Linear(in_features=channels, out_features=4 * channels * 2)
         self.linear_geglu_2 = nn.Linear(in_features=4 * channels, out_features=channels)
@@ -168,12 +168,12 @@ class UNET_AttentionBlock(nn.Module):
         # (Batch_Size, Features, Height, Width) + (Batch_Size, Features, Height, Width) -> (Batch_Size, Features, Height, Width)
         return self.conv_output(x) + residue_long
 
-class SwitchSequential(nn.Module):
+class SwitchSequential(nn.Sequential):
     def forward(self, x: torch.Tensor, context: torch.Tensor, time: torch.Tensor) -> torch.Tensor:
         for layer in self:
             if isinstance(layer, UNET_AttentionBlock):
                 x = layer(x, context)
-            elif isinstance(x, UNET_ResidualBlock):
+            elif isinstance(layer, UNET_ResidualBlock):
                 x = layer(x, time)
             else:
                 x = layer(x)
@@ -192,7 +192,7 @@ class Upsample(nn.Module):
 
     
 class UNET(nn.Module):
-    def __init__(self,):
+    def __init__(self):
         super().__init__()
 
         self.encoders = nn.ModuleList([
@@ -307,6 +307,7 @@ class UNET_OutputLayer(nn.Module):
 class Diffusion(nn.Module):
 
     def __init__(self):
+        super().__init__()
         self.time_embedding = TimeEmbedding(n_embed=320)
         self.unet = UNET()
         self.final = UNET_OutputLayer(in_channels=320, out_channels=4)
