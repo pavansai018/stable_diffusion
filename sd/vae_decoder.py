@@ -48,7 +48,7 @@ class VAE_ResidualBlock(nn.Module):
         self.groupnorm_1 = nn.GroupNorm(num_groups=32, num_channels=in_channels)
         self.conv_1 = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, padding=1)
 
-        self.groupnorm_2 = nn.GroupNorm(num_groups=32, out_channels=out_channels)
+        self.groupnorm_2 = nn.GroupNorm(num_groups=32, num_channels=out_channels)
         self.conv_2 = nn.Conv2d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, padding=1)
 
         if in_channels == out_channels:

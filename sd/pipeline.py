@@ -40,15 +40,15 @@ def generate(prompt: str, uncond_prompt: str, input_image: None | torch.Tensor, 
             raise ValueError('Strength must be between 0 and 1')
         
         if idle_device:
-            to_idle: lambda x: x.to(idle_device)
+            to_idle = lambda x: x.to(idle_device)
         else:
-            to_idle: lambda x: x
+            to_idle = lambda x: x
 
         generator = torch.Generator(device=device)
         if seed is None:
             generator.seed()
         else:
-            generator.manual_seed(seed=seed)
+            generator.manual_seed(seed)
 
         clip = models['clip']
         clip.to(device) 
@@ -57,7 +57,7 @@ def generate(prompt: str, uncond_prompt: str, input_image: None | torch.Tensor, 
             # convert the prompt into tokens
             cond_tokens = tokenizer.batch_encode_plus([prompt], padding='max_length', max_length=77).input_ids
             # convert input ids into tensor (batch_size, seq len)
-            cond_tokens = torch.Tensor(cond_tokens, dtype=torch.long, device=device)
+            cond_tokens = torch.tensor(cond_tokens, dtype=torch.long, device=device)
 
             # (batch size, seq len) -> (batch size, seq len, dim)
             cond_context = clip(cond_tokens)
@@ -124,7 +124,7 @@ def generate(prompt: str, uncond_prompt: str, input_image: None | torch.Tensor, 
         timesteps = tqdm(sampler.timesteps)
         for i, timestep in enumerate(timesteps):
             # (1, 320)
-            time_embedding = get_time_embedding(timestep=timestep).to_device
+            time_embedding = get_time_embedding(timestep=timestep).to(device)
 
             # (batch_szie, 4, latent_height, latent_width)
             model_input = latents
@@ -132,20 +132,16 @@ def generate(prompt: str, uncond_prompt: str, input_image: None | torch.Tensor, 
             if do_cfg:
                 # (Batch_Size, 4, Latents_Height, Latents_Width) -> (2 * Batch_Size, 4, Latents_Height, Latents_Width)
                 model_input = model_input.repeat(2, 1, 1, 1)
-
-            else:
-                # model_output is the predicted noise
-                # (Batch_Size, 4, Latents_Height, Latents_Width) -> (Batch_Size, 4, Latents_Height, Latents_Width)
-                model_output = diffusion(model_input, context, time_embedding)
+            # model_output is the predicted noise
+            # (Batch_Size, 4, Latents_Height, Latents_Width) -> (Batch_Size, 4, Latents_Height, Latents_Width)
+            model_output = diffusion(model_input, context, time_embedding)
 
             
             if do_cfg:
                 output_cond, output_uncond = model_output.chunk(2)
                 model_output = cfg_scale * (output_cond - output_uncond) + output_uncond
-
-            else:
-                # (Batch_Size, 4, Latents_Height, Latents_Width) -> (Batch_Size, 4, Latents_Height, Latents_Width)
-                latents = sampler.step(timestep, latents, model_output)
+            # (Batch_Size, 4, Latents_Height, Latents_Width) -> (Batch_Size, 4, Latents_Height, Latents_Width)
+            latents = sampler.step(timestep, latents, model_output)
 
         to_idle(diffusion)
 
