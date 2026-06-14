@@ -7,7 +7,7 @@ import model_converter
 
 def preload_models_from_standard_weights(ckpt_path: str, device: str):
     state_dict = model_converter.load_from_standard_weights(ckpt_path, device)
-
+    device = 'cpu'
     encoder = VAE_Encoder().to(device)
     encoder.load_state_dict(state_dict['encoder'], strict=True)
 
