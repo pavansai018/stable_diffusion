@@ -14,15 +14,15 @@ class DDPMSampler:
         self.generator = generator
         self.num_training_steps = num_training_steps
         # we should go from 1000 to 1 during denoising. so we reversed 
-        self.timesteps = torch.from_numpy(ndarray=np.arange(start=0, stop=num_training_steps))[::-1].copy()
+        self.timesteps = torch.from_numpy(np.arange(start=0, stop=num_training_steps)[::-1].copy())
 
     def set_inference_timesteps(self, num_inference_steps:int=50):
         self.num_inference_steps = num_inference_steps
         # 999, 998, 997 .... 0 = 1000 steps
         # 999, 999-20, 999-40, ... 0 = 50 steps
         step_ratio = self.num_training_steps // self.num_inference_steps
-        timesteps = (np.arange(0, num_inference_steps) * step_ratio).round()[::,-1].copy().astype(np.int64)
-        self.timesteps = torch.from_numpy(ndarray=timesteps)
+        timesteps = (np.arange(0, num_inference_steps) * step_ratio).round()[::-1].copy().astype(np.int64)
+        self.timesteps = torch.from_numpy(timesteps)
     
     def _get_previous_timestep(self, timestep: int) -> int:
         prev_t = timestep - self.num_training_steps // self.num_inference_steps
@@ -99,7 +99,7 @@ class DDPMSampler:
         alphas_cumprod = self.alphas_cumprod.to(device=original_samples.device, dtype=original_samples.dtype)
         timesteps = timesteps.to(original_samples.device)
 
-        sqrt_alpha_prod = alphas_cumprod(timesteps) ** 0.5
+        sqrt_alpha_prod = alphas_cumprod[timesteps] ** 0.5
         sqrt_alpha_prod = sqrt_alpha_prod.flatten()
         while len(sqrt_alpha_prod.shape) < len(original_samples.shape):
             sqrt_alpha_prod = sqrt_alpha_prod.unsqueeze(-1)
